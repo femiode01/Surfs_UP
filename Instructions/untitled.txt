@@ -1,0 +1,56 @@
+
+@app.route("/api/v1.0/stations")
+def stations():
+        """ List of stations from the Dataset"""
+    stati = session.query(Measurement.station).all()
+    
+        stationslist = [stati]
+        
+        return jasonify(stationslist)
+    
+
+@app.route("/api/v1.0/tobs")
+def tobs():
+    """Return a list of tobs for the previous year"""
+    tobs_results = session.query(Measurement.date, Measurement.tobs).\
+        filter(Measurement.date >= "2016-01-01", Measurement.date <= "2017-01-01").all()
+    
+    
+     # Create a dictionary from the row data and append to a list
+    temp_obs = []
+    for o in tob_results:
+        tob_dict = {}
+        tob_dict["date"] = o.date
+        tob_dict["tobs"] = o.tobs
+        temp_obs.append(tob_dict)
+        
+        # Jasonify the list
+        
+        return jasonify(tob_dict)
+    
+    
+@app.route("/api/v1.0/<start>")
+def temps_start(start):
+    """ Given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than 
+        and equal to the start date. 
+    """
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+                filter(Measurement.date >= start).all()
+    
+    # Convert list of tuples into normal list
+    temperatures_start = list(np.ravel(results))
+
+    return jsonify(temperatures_start)
+
+
+
+@app.route("/api/v1.0/<start>/<end>")
+def temps_start_end(start, end):
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+                filter(Measurement.date >= start).\
+                filter(Measurement.date <= end).all()
+    
+    # Convert list of tuples into normal list
+    temperatures_start_end = list(np.ravel(results))
+
+    return jsonify(temperatures_start_end)
